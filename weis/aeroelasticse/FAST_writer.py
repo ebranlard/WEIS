@@ -209,6 +209,17 @@ class InputWriter_Common(object):
         else:
             for HtFracti, TMassDeni, TwFAStifi, TwSSStifi in zip(HtFract, TMassDen, TwFAStif, TwSSStif):
                 f.write('{: 2.15e} {: 2.15e} {: 2.15e} {: 2.15e}\n'.format(HtFracti, TMassDeni, TwFAStifi, TwSSStifi))
+        
+        # Correct numerical errors where coefficients don't sum up to exactly 1. Add a delta to the x^6 term to fix the error
+        if sum(self.fst_vt['ElastoDynTower']['TwFAM1Sh']) != 1.:
+            self.fst_vt['ElastoDynTower']['TwFAM1Sh'][4] += 1. - sum(self.fst_vt['ElastoDynTower']['TwFAM1Sh'])
+        if sum(self.fst_vt['ElastoDynTower']['TwFAM2Sh']) != 1.:
+            self.fst_vt['ElastoDynTower']['TwFAM2Sh'][4] += 1. - sum(self.fst_vt['ElastoDynTower']['TwFAM2Sh'])
+        if sum(self.fst_vt['ElastoDynTower']['TwSSM1Sh']) != 1.:
+            self.fst_vt['ElastoDynTower']['TwSSM1Sh'][4] += 1. - sum(self.fst_vt['ElastoDynTower']['TwSSM1Sh'])
+        if sum(self.fst_vt['ElastoDynTower']['TwSSM2Sh']) != 1.:
+            self.fst_vt['ElastoDynTower']['TwSSM2Sh'][4] += 1. - sum(self.fst_vt['ElastoDynTower']['TwSSM2Sh'])
+        
         f.write('---------------------- TOWER FORE-AFT MODE SHAPES ------------------------------\n')
         f.write('{:<22} {:<11} {:}'.format(self.fst_vt['ElastoDynTower']['TwFAM1Sh'][0], 'TwFAM1Sh(2)', '- Mode 1, coefficient of x^2 term\n'))
         f.write('{:<22} {:<11} {:}'.format(self.fst_vt['ElastoDynTower']['TwFAM1Sh'][1], 'TwFAM1Sh(3)', '-       , coefficient of x^3 term\n'))
