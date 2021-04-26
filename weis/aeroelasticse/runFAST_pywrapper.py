@@ -32,7 +32,7 @@ if mactype == "linux" or mactype == "linux2":
     libext = ".so"
 elif mactype == "darwin":
     libext = '.dylib'
-elif mactype == "win32":
+elif matype == "win32" or mactype == "windows": # platform.system()='Windows', sys.platform='win32'
     libext = '.dll'
 elif mactype == "cygwin":
     libext = ".dll"
