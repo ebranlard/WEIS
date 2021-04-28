@@ -35,7 +35,7 @@ if __name__=='__main__':
     csvFile = os.path.join(simulationFolder, 'Campbell_ModesID_Manual.csv') # <<< TODO Change me if manual identification is done
     
     # --- Parameters to run OpenFAST
-    fastExe = '../../local/bin/openfast.exe' # Path to a FAST exe (and dll) 
+    fastExe = '../../local/bin/openfast' # Path to a FAST exe (and dll) 
     #fastExe = 'openfast.exe' # Path to a FAST exe (and dll) 
 
     # --- Step 1: Write OpenFAST inputs files for each operating points 

@@ -1,4 +1,4 @@
-Wind [m/s]  , Pitch [deg] , Power [MW]  , Rotor Speed [rpm] , Tip Speed [m/s] , Rotor Thrust [MN] , Rotor Torque [MNm] , Rotor Cp [-] , Rotor Ct [-]
+Wind [m/s]  , Pitch [deg] , Power [MW]  , RotorSpeed [rpm] , Tip Speed [m/s] , Rotor Thrust [MN] , Rotor Torque [MNm] , Rotor Cp [-] , Rotor Ct [-]
 0.0          , 3.999999663 , 0.00000000 , 0.00000000        , 00.00000000     , 0.000000000       , 0.000000000        , 0.000000000  , 0.000000000
 2.999999831 , 3.999999663 , 0.070021377 , 4.99419631        , 62.75892175     , 0.593964861       , 0.138676858        , 0.100335552  , 0.819748943
 4           , 3.708421492 , 0.595088475 , 4.995668685       , 62.77742416     , 0.744019844       , 1.178170168        , 0.359305118  , 0.808268424
