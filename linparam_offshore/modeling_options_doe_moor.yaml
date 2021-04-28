@@ -107,7 +107,7 @@ Level2:
 openfast:
     file_management:
         FAST_namingOut:    lin         # Name of the OpenFAST output files
-        FAST_runDirectory: lin_test/semi_lin             # Path to folder with the OpenFAST output files
+        FAST_runDirectory: lin_moor/             # Path to folder with the OpenFAST output files
     dlc_settings:
         run_power_curve:   False
         run_IEC:           False

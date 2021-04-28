@@ -1,0 +1,37 @@
+general:
+    folder_output: moor_doe
+    fname_output: iea15mw
+    
+design_variables:
+  tower:
+    rho:
+      flag: False
+      lower_bound: 5460.   # 7800 - 2340 (0.3)
+      upper_bound: 10140.  # 7800 + 2340 (0.3)
+    E:
+      flag: False
+      lower_bound: 140.e9  # 200 -60
+      upper_bound: 260.e9  # 200 +60
+  mooring:
+    line_mass_density_coeff:  # 685 kg/m**3 is the nominal value
+      flag: True
+      lower_bound: 500.
+      upper_bound: 1000.
+    line_stiffness_coeff:  # 3.27e9 kg/m**2 is the nominal
+      flag: True
+      lower_bound: 2.e9
+      upper_bound: 5.e9
+
+driver:
+  optimization:
+    flag: False           # Flag to enable optimization
+  design_of_experiments:
+    flag: True            # Flag to enable design of experiments
+    run_parallel: False    # Flag to run using parallel processing
+    generator: FullFact    # Type of input generator. (Uniform)
+    num_samples: 5        # number of samples for (Uniform only)
+
+recorder:
+    flag: True             # Flag to activate OpenMDAO recorder
+    file_name: log_opt.sql  # Name of OpenMDAO recorder
+    just_dvs: True          
