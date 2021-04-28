@@ -103,11 +103,11 @@ class LinearFAST(runFAST_pywrapper_batch):
         case_inputs = {}
         case_inputs[("Fst","TMax")] = {'vals':[self.TMax], 'group':0}
         case_inputs[("Fst","Linearize")] = {'vals':['True'], 'group':0}
-        case_inputs[("Fst","CalcSteady")] = {'vals':['True'], 'group':0}        # potential modelling input, but only Trim solution supported for now
         case_inputs[("Fst","TrimGain")] = {'vals':[self.TrimGain], 'group':0}  
         case_inputs[("Fst","TrimTol")] = {'vals':[self.TrimTol], 'group':0}  
         case_inputs[("Fst","OutFmt")] = {'vals':['ES20.11E3'], 'group':0} 
         case_inputs[("Fst","OutFileFmt")] = {'vals':[3], 'group':0} 
+        case_inputs[("Fst","DT_Out")] = {'vals':[0.1], 'group':0} 
 
         # HydroStates: if true, there will be a lot of hydronamic states, equal to num. states in ss_exct and ss_radiation models
         if any([d in ['PtfmSgDOF','PtfmSwDOF','PtfmHvDOF','PtfmRDOF','PtfmPDOF','PtfmyDOF'] for d in self.DOFs]):
@@ -163,6 +163,16 @@ class LinearFAST(runFAST_pywrapper_batch):
         # Set initial rotor speed to rated
         case_inputs[("ElastoDyn","RotSpeed")] = {'vals':[rosco_inputs['PC_RefSpd'] * 30 / np.pi], 'group':0}  # convert to rpm and use 95% of rated
 
+
+        case_inputs[('ElastoDyn','PtfmHeave')] = {'vals': [0], 'group': 0}
+        case_inputs[('ElastoDyn','PtfmSurge')] = {'vals': [2], 'group': 0}
+        case_inputs[('ElastoDyn','PtfmPitch')] = {'vals': [1.3], 'group': 0}
+
+        case_inputs[('ElastoDyn','PtfmMass')] = {'vals': [1.7838E+07], 'group': 0}
+        case_inputs[('ElastoDyn','PtfmRIner')] = {'vals': [1.2507E+10], 'group': 0}
+        case_inputs[('ElastoDyn','PtfmPIner')] = {'vals': [1.2507E+10], 'group': 0}
+        case_inputs[('ElastoDyn','PtfmYIner')] = {'vals': [2.3667E+10], 'group': 0}
+
         # Hydrodyn Inputs, these need to be state-space (2), but they should work if 0
         # Need to be this for linearization
         case_inputs[("HydroDyn","WaveMod")]     = {'vals':[0], 'group':0}
@@ -217,16 +227,19 @@ class LinearFAST(runFAST_pywrapper_batch):
 
         self.channels = channels
 
-        # Lin Times, KEEP THIS IN CASE WE USE THIS METHOD OF LINEARIZATION AT SOME POINT IN THE FUTURE
-        # rotPer = 60. / np.array(case_inputs['ElastoDyn','RotSpeed']['vals'])
-        # linTimes = np.linspace(self.TMax-100,self.TMax-100 + rotPer,num = self.NLinTimes, endpoint=False)
-        # linTimeStrings = []
+        #case_inputs[("Fst","CalcSteady")] = {'vals':['True'], 'group':0}        # potential modelling input, but only Trim solution supported for now
 
-        # if linTimes.ndim == 1:
-        #     linTimeStrings = np.array_str(linTimes,max_line_width=9000,precision=3)[1:-1]
-        # else:
-        #     for iCase in range(0,linTimes.shape[1]):
-        #         linTimeStrings.append(np.array_str(linTimes[:,iCase],max_line_width=9000,precision=3)[1:-1])
+        #Lin Times, KEEP THIS IN CASE WE USE THIS METHOD OF LINEARIZATION AT SOME POINT IN THE FUTURE
+        case_inputs[("Fst","CalcSteady")] = {'vals':['False'], 'group':0}        # potential modelling input, but only Trim solution supported for now
+        rotPer = 60. / np.array(case_inputs['ElastoDyn','RotSpeed']['vals'])
+        linTimes = np.linspace(self.TMax-100,self.TMax-100 + rotPer,num = self.NLinTimes, endpoint=False)
+        linTimeStrings = []
+        if linTimes.ndim == 1:
+            linTimeStrings = np.array_str(linTimes,max_line_width=9000,precision=3)[1:-1]
+        else:
+            for iCase in range(0,linTimes.shape[1]):
+                linTimeStrings.append(np.array_str(linTimes[:,iCase],max_line_width=9000,precision=3)[1:-1])
+        case_inputs[("Fst","LinTimes")] = {'vals':[linTimes], 'group':0}     # modelling option
         
         case_inputs[("Fst","NLinTimes")] = {'vals':[self.NLinTimes], 'group':0}     # modelling option
 

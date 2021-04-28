@@ -32,7 +32,7 @@ if mactype == "linux" or mactype == "linux2":
     libext = ".so"
 elif mactype == "darwin":
     libext = '.dylib'
-elif mactype == "win32":
+elif mactype == "win32" or mactype == "windows":
     libext = '.dll'
 elif mactype == "cygwin":
     libext = ".dll"
