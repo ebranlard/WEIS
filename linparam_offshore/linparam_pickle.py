@@ -25,7 +25,11 @@ def openFASTstateSpace(eval_parameters, *args, **kwargs):
         # Find resolution for each design variables
         resolution= dict()
         for k,v in dvs_loc.items():
-            resolution[k] = np.min(np.diff(v))
+            if len(v)==1:
+                #print('>>> NOTE: key {} has constant value (0 resolution)'.format(k))
+                resolution[k] = v[0]/2
+            else:
+                resolution[k] = np.min(np.diff(v))
         #print('resolution',resolution)
 
         # Looking in database of cases
@@ -44,8 +48,8 @@ def openFASTstateSpace(eval_parameters, *args, **kwargs):
                     nFound+=1
                     #print('OK Comparing {} value {} with {}, OK for index {}'.format (k, eval_parameters[k], var_val, idx))
                 else:                                                                                                 
-                    pass
                     #print('---Comparing {} value {} with {}, NOT OK, index {}'.format(k, eval_parameters[k], var_val, idx))
+                    pass
             #print(nFound, len(dvs.keys()))
             if nFound==len(dvs_loc.keys()):
                 Found=True
@@ -63,12 +67,19 @@ def openFASTstateSpace(eval_parameters, *args, **kwargs):
         C=ABCD_list[idx]['C'][:,:,0]
         D=ABCD_list[idx]['D'][:,:,0]
         # --- Hack using MBC double checking
-        MBC=ABCD_list[idx]['MBC']
-        BladeLen=120.97
-        TowerLen=144.39
-        CD = mbc.campbell_diagram_data(MBC[0], BladeLen, TowerLen)
-        print('>>> Freq ', np.around(CD['NaturalFreq_Hz'].flatten(),3))
-        print('>>> Damp ', np.around(CD['DampingRatio'].flatten(),3))
+        import pyFAST
+        from pyFAST.linearization.campbell import campbellData2TXT
+        try:
+            MBC=ABCD_list[idx]['MBC']
+            BladeLen=120.97
+            TowerLen=144.39
+            CD = mbc.campbell_diagram_data(MBC[0], BladeLen, TowerLen)
+            s=campbellData2TXT([CD], nFreqOut=50)
+            print(s)
+            print('>>> Freq MBC', np.around(CD['NaturalFreq_Hz'].flatten(),3))
+            print('>>> Damp MBC', np.around(CD['DampingRatio'].flatten(),3))
+        except:
+            print('>>> MBC not found')
     else:
         raise NotImplementedError()
         # Generate OpenFAST inputs
@@ -126,19 +137,23 @@ def parametricStateSpace(parameter_ranges, *args, **kwargs):
 
     ABCD0 = openFASTstateSpace(eval_parameters_ref, *args, **kwargs)
 
-    # For each parameter, evalute at min and max, and compute slope
+    # For each parameter, evaluate at min and max, and compute slope
     dABCD={}
     for name,p_range in parameter_ranges.items():
         eval_parameters=eval_parameters_ref.copy()
         deltaP = p_range['max'] - p_range['min']
-        # Eval at min
-        eval_parameters[name] = p_range['min']
-        ABCDm = openFASTstateSpace(eval_parameters, *args, **kwargs)
-        # Eval at max
-        eval_parameters[name] = p_range['max']
-        ABCDp = openFASTstateSpace(eval_parameters, *args, **kwargs)
-        # Compute slope
-        dABCD[name] = stateSpaceSlopes(ABCDp, ABCDm, deltaP)
+        if deltaP==0:
+            print('NOTE: key {} has constant value, setting slope to 0')
+            dABCD[name]  = (ABCD0[0]*0, ABCD0[1]*0, ABCD0[2]*0, ABCD0[3]*0)
+        else:
+            # Eval at min
+            eval_parameters[name] = p_range['min']
+            ABCDm = openFASTstateSpace(eval_parameters, *args, **kwargs)
+            # Eval at max
+            eval_parameters[name] = p_range['max']
+            ABCDp = openFASTstateSpace(eval_parameters, *args, **kwargs)
+            # Compute slope
+            dABCD[name] = stateSpaceSlopes(ABCDp, ABCDm, deltaP)
 
     return ABCD0, dABCD
 

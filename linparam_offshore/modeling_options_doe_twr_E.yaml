@@ -4,8 +4,8 @@ General:
 WISDEM:
     RotorSE:
         flag: True
-        n_pitch_perf_surfaces: 5
-        n_tsr_perf_surfaces: 5
+        n_pitch_perf_surfaces: 10
+        n_tsr_perf_surfaces: 10
         spar_cap_ss: Spar_Cap_SS
         spar_cap_ps: Spar_Cap_PS
         n_span: 60
@@ -107,7 +107,7 @@ Level2:
 openfast:
     file_management:
         FAST_namingOut:    lin         # Name of the OpenFAST output files
-        FAST_runDirectory: lin_test/semi_lin             # Path to folder with the OpenFAST output files
+        FAST_runDirectory: lin_twr_E/             # Path to folder with the OpenFAST output files
     dlc_settings:
         run_power_curve:   False
         run_IEC:           False

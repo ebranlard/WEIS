@@ -438,6 +438,16 @@ class InputWriter_OpenFAST(InputWriter_Common):
         ed_file = os.path.join(self.FAST_runDirectory,self.fst_vt['Fst']['EDFile'])
         f = open(ed_file, 'w')
 
+
+        #print('>>> FAST_writer SUPER HACK')
+        #self.fst_vt['ElastoDyn']['PtfmRIner'] = 1.2507E+10
+        #self.fst_vt['ElastoDyn']['PtfmPIner'] = 1.2507E+10
+        #self.fst_vt['ElastoDyn']['PtfmYIner'] = 2.3667E+10
+        #self.fst_vt['ElastoDyn']['BlPitch1'] = 2.720495409
+        #self.fst_vt['ElastoDyn']['BlPitch2']
+        #self.fst_vt['ElastoDyn']['BlPitch3']
+
+
         f.write('------- ELASTODYN v1.03.* INPUT FILE -------------------------------------------\n')
         f.write('Generated with AeroElasticSE FAST driver\n')
 
@@ -525,6 +535,11 @@ class InputWriter_OpenFAST(InputWriter_Common):
         f.write('{:<22} {:<11} {:}'.format(self.fst_vt['ElastoDyn']['PtfmRIner'], 'PtfmRIner', '- Platform inertia for roll tilt rotation about the platform CM (kg m^2)\n'))
         f.write('{:<22} {:<11} {:}'.format(self.fst_vt['ElastoDyn']['PtfmPIner'], 'PtfmPIner', '- Platform inertia for pitch tilt rotation about the platform CM (kg m^2)\n'))
         f.write('{:<22} {:<11} {:}'.format(self.fst_vt['ElastoDyn']['PtfmYIner'], 'PtfmYIner', '- Platform inertia for yaw rotation about the platform CM (kg m^2)\n'))
+
+
+
+
+
         f.write('---------------------- BLADE ---------------------------------------------------\n')
         f.write('{:<22} {:<11} {:}'.format(self.fst_vt['ElastoDyn']['BldNodes'], 'BldNodes', '- Number of blade nodes (per blade) used for analysis (-)\n'))
         f.write('{:<22} {:<11} {:}'.format('"'+self.fst_vt['ElastoDyn']['BldFile1']+'"', 'BldFile1', '- Name of file containing properties for blade 1 (quoted string)\n'))

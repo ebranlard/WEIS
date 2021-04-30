@@ -41,11 +41,13 @@ class LinearTurbineModel(object):
             n_lin_cases = len(lin_file_names)
 
             u_ops = np.array([],[])
+            self.MBC=[]
             for iCase in range(0,n_lin_cases):
                 # nlin array of linearization outputs for iCase
                 lin_files_i = [os.path.realpath(os.path.join(lin_file_dir,lin_file_names[iCase] + '.{}.lin'.format(i_lin+1))) for i_lin in range(0,nlin)]
 
                 MBC, matData, FAST_linData = mbc.fx_mbc3(lin_files_i)
+                self.MBC.append(MBC)
 
                 if not iCase:   # first time through
                     # Initialize operating points, matrices

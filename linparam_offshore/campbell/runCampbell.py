@@ -29,8 +29,8 @@ if __name__=='__main__':
     nPerPeriod       = 36   # Number of linearization per revolution
 
     # Main flags
-    writeFSTfiles = True # Write OpenFAST input files based on template and operatingPointsFile
-    runFast       = True # Run OpenFAST
+    writeFSTfiles = False # Write OpenFAST input files based on template and operatingPointsFile
+    runFast       = False # Run OpenFAST
     postproLin    = False # Postprocess the linearization outputs (*.lin)
     csvFile = os.path.join(simulationFolder, 'Campbell_ModesID_Manual.csv') # <<< TODO Change me if manual identification is done
     
@@ -57,7 +57,7 @@ if __name__=='__main__':
 
     # --- Step 4: Campbell diagram plot
     fig, axes, figName = lin.plotCampbellDataFile(csvFile, ws_or_rpm='ws', ylim=[0,4])
-    #  fig.savefig(figName+'.png')
+    fig.savefig(figName+'.pdf')
     plt.show()
 
 

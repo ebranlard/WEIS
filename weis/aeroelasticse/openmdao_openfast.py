@@ -414,6 +414,7 @@ class FASTLoadCases(ExplicitComponent):
                     'B' : LinearTurbine.B_ops,
                     'C' : LinearTurbine.C_ops,
                     'D' : LinearTurbine.D_ops,
+					'MBC' : LinearTurbine.MBC,
                     'omega_rpm' : LinearTurbine.omega_rpm,
                     'DescCntrlInpt' : LinearTurbine.DescCntrlInpt,
                     'DescStates' : LinearTurbine.DescStates,

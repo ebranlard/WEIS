@@ -40,7 +40,7 @@ Level3: # Options for WEIS fidelity level 3 = nonlinear time domain
         CompElast: 1
         CompInflow: 1
         CompAero: 2
-        CompServo: 1
+        CompServo: 0
         CompHydro: 1
         CompSub: 0
         CompMooring: 1
@@ -101,7 +101,7 @@ Level2:
         TrimGain: 1e-4
         TrimTol: 1e-3
         wind_speeds: [5]
-        DOFs: ['TwFADOF1','TwFADOF2','TwSSDOF1','TwSSDOF2','PtfmHvDOF','PtfmSgDOF','PtfmPDOF']
+        DOFs: ['TwFADOF1','TwFADOF2','TwSSDOF1','TwSSDOF2','PtfmHvDOF','PtfmSgDOF','PtfmPDOF', 'FlapDOF1','FlapDOF2','EdgeDOF']
         NLinTimes: 36    
     
 openfast:

@@ -26,15 +26,18 @@ TowerLen=144.39
 defaultRC();
 
 # --- Parameters
-bRemoveHighDamp=True
-bFlipKeys=True
-caseName   = '2D_E_rho_9'
-pickleFile = 'tower_doe_{}/ABCD_matrices.pkl'.format(caseName)
-caseFile   = 'tower_doe_{}/log_opt.sql'.format(caseName)
-if bRemoveHighDamp:
-    nFreqMax = 6
-else:
-    nFreqMax = 8
+bRemoveHighDamp=False
+bFlipKeys=False
+caseName   = 'tower'
+pickleFile = '{}_doe/ABCD_matrices.pkl'.format(caseName)
+caseFile   = '{}_doe/log_opt.sql'.format(caseName)
+
+nFreqMax=50
+
+# if bRemoveHighDamp:
+#     nFreqMax = 6
+# else:
+#     nFreqMax = 8
 
 if bFlipKeys:
     caseName+='Flip'
@@ -147,8 +150,8 @@ for i1,v1 in enumerate(V1):
         # Store
         AA_d[:,:,i1,i2] = SS_d[0]
         AA_l[:,:,i1,i2] = SS_l[0]
-        fd_d, zeta_d, _, f0_d = eigA(SS_d[0]) #, nq=1, nq1=1, fullEV=False);
-        fd_l, zeta_l, _, f0_l = eigA(SS_l[0]) #, nq=1, nq1=1, fullEV=False);
+        fd_d, zeta_d, _, f0_d = eigA(SS_d[0], nq=16) #, nq=1, nq1=1, fullEV=False);
+        fd_l, zeta_l, _, f0_l = eigA(SS_l[0], nq=16) #, nq=1, nq1=1, fullEV=False);
         print('>>> Freq',np.around(f0_d,3))
         print('>>> Damp',np.around(zeta_d,3))
         if bRemoveHighDamp:
@@ -205,8 +208,21 @@ else:
     '2nd tower fa'
     ]
 
-IFreq=[iFA1,iSS1,iFA2,iFl2c,iFl2p]
-SFreq=['1st Fore-Aft','1st Side Side','2nd Fore-Aft','2nd Flap coll.','2nd Flap prog.']
+
+IFreq=[ 0, 1, 3, 46, 48, 49 ]
+
+SFreq=[
+'Surge',
+'Pitch',
+'Heave',
+'1st tower ss',
+'2nd tower fa',
+'2nd tower ss',
+]
+
+
+# IFreq=[iFA1,iSS1,iFA2,iFl2c,iFl2p]
+# SFreq=['1st Fore-Aft','1st Side Side','2nd Fore-Aft','2nd Flap coll.','2nd Flap prog.']
 
 # Compute plot bounds
 minF    = 100000
@@ -294,7 +310,7 @@ cbar=fig.colorbar(ims[2], cax=cbar_ax)
 #     ax.clabel(cs,list(levelsLines))
 # 
 
-# --- Frequencies terms
+# --- All Frequencies terms in 
 fig,axes = plt.subplots(1, 2, sharex=True, figsize=(9.4,8.4)) # (6.4,4.8)
 fig.subplots_adjust(left=0.12, right=0.95, top=0.95, bottom=0.11, hspace=0.20, wspace=0.20)
 Colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
@@ -328,27 +344,30 @@ fig.savefig(caseName+'_freq.png')
 
 
 
-# --- Frequencies terms individual axes
-fig,axes = plt.subplots(nFreqMax, 2, sharex=True, figsize=(8.4,8.4)) # (6.4,4.8)
-fig.subplots_adjust(left=0.12, right=0.95, top=0.95, bottom=0.11, hspace=0.20, wspace=0.40)
-axes = axes.reshape(nFreqMax,2)
+# --- All Frequencies terms individual axes
+# fig,axes = plt.subplots(nFreqMax, 2, sharex=True, figsize=(8.4,8.4)) # (6.4,4.8)
+# fig.subplots_adjust(left=0.12, right=0.95, top=0.95, bottom=0.11, hspace=0.20, wspace=0.40)
+# axes = axes.reshape(nFreqMax,2)
+# 
+# for ii in np.arange(nFreqMax):
+#     ax = axes[nFreqMax-ii-1,0]
+#     for i2,v2 in enumerate(V2):
+#          ax.plot(V1, freq_0_d[ii,:,i2], '-', c=fColrs(i2+1), label=r'{} = {}'.format(k2,v2))
+#          ax.plot(V1, freq_0_l[ii,:,i2], '--',c=fColrs(i2+1),)
+#     ax.set_ylabel('Freq. #{} [Hz]'.format(ii+1))
+# 
+#     ax = axes[nFreqMax-ii-1,1]
+#     for i2,v2 in enumerate(V2):
+#          ax.plot(V1, damp_d[ii,:,i2], '-', c=fColrs(i2+1)) #, label=r'${} = {}'.format(k2,v2))
+#          ax.plot(V1, damp_l[ii,:,i2], '--',c=fColrs(i2+1))
+#     ax.set_ylabel('Damp. #{} [-]'.format(ii+1))
+# axes[-1,0].set_xlabel(k1)
+# axes[-1,1].set_xlabel(k1)
+# axes[0,0].legend()
+# fig.savefig(caseName+'_freqIndiv.png')
 
-for ii in np.arange(nFreqMax):
-    ax = axes[nFreqMax-ii-1,0]
-    for i2,v2 in enumerate(V2):
-         ax.plot(V1, freq_0_d[ii,:,i2], '-', c=fColrs(i2+1), label=r'{} = {}'.format(k2,v2))
-         ax.plot(V1, freq_0_l[ii,:,i2], '--',c=fColrs(i2+1),)
-    ax.set_ylabel('Freq. #{} [Hz]'.format(ii+1))
 
-    ax = axes[nFreqMax-ii-1,1]
-    for i2,v2 in enumerate(V2):
-         ax.plot(V1, damp_d[ii,:,i2], '-', c=fColrs(i2+1)) #, label=r'${} = {}'.format(k2,v2))
-         ax.plot(V1, damp_l[ii,:,i2], '--',c=fColrs(i2+1))
-    ax.set_ylabel('Damp. #{} [-]'.format(ii+1))
-axes[-1,0].set_xlabel(k1)
-axes[-1,1].set_xlabel(k1)
-axes[0,0].legend()
-fig.savefig(caseName+'_freqIndiv.png')
+
 
 
 plt.show()

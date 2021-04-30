@@ -2,6 +2,11 @@ lin_test
 lin_twr
 lin_moor
 tower_doe
+tower_rho_doe
 moor_doe
 baseline
 baseline_new
+*.png
+*.pdf
+Misc
+case_matrix*

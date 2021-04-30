@@ -131,6 +131,7 @@ class LinearFAST(runFAST_pywrapper_batch):
 
         # AeroDyn Inputs
         case_inputs[("AeroDyn15","AFAeroMod")] = {'vals':[1], 'group':0}
+        case_inputs[("AeroDyn15","FrozenWake")] = {'vals':['True'], 'group':0} # Added Manu
 
         # Servodyn Inputs
         case_inputs[("ServoDyn","PCMode")] = {'vals':[0], 'group':0}
@@ -177,12 +178,27 @@ class LinearFAST(runFAST_pywrapper_batch):
 
         case_inputs[('ElastoDyn','PtfmHeave')] = {'vals': [0], 'group': 0}
         case_inputs[('ElastoDyn','PtfmSurge')] = {'vals': [2], 'group': 0}
-        case_inputs[('ElastoDyn','PtfmPitch')] = {'vals': [1.3], 'group': 0}
+        case_inputs[('ElastoDyn','PtfmPitch')] = {'vals': [1.0], 'group': 0}
 
+        print('>>> Linear FAST HACK VALUES')
         case_inputs[('ElastoDyn','PtfmMass')] = {'vals': [1.7838E+07], 'group': 0}
-        case_inputs[('ElastoDyn','PtfmRIner')] = {'vals': [1.2507E+10], 'group': 0}
-        case_inputs[('ElastoDyn','PtfmPIner')] = {'vals': [1.2507E+10], 'group': 0}
-        case_inputs[('ElastoDyn','PtfmYIner')] = {'vals': [2.3667E+10], 'group': 0}
+        case_inputs[('ElastoDyn','BlPitch1')] = {'vals': [2.720495409], 'group': 0}
+        case_inputs[('ElastoDyn','BlPitch2')] = {'vals': [2.720495409], 'group': 0}
+        case_inputs[('ElastoDyn','BlPitch3')] = {'vals': [2.720495409], 'group': 0}
+        case_inputs[('ElastoDyn','RotSpeed')] = {'vals': [4.995168575], 'group': 0}
+        case_inputs[('ElastoDyn','PtfmCMzt')] = {'vals': [-12.162590470852077], 'group': 0}
+
+        #case_inputs[('ElastoDyn','PtfmRIner')] = {'vals': [1.2507E+10], 'group': 0}
+        #case_inputs[('ElastoDyn','PtfmPIner')] = {'vals': [1.2507E+10], 'group': 0}
+        #case_inputs[('ElastoDyn','PtfmYIner')] = {'vals': [2.3667E+10], 'group': 0}
+
+        case_inputs[('ElastoDyn','NacCMzn')] = {'vals': [4.2751235540691175], 'group': 0}
+
+
+        case_inputs[('ElastoDyn','PtfmRIner')] = {'vals': [7615855232.812262], 'group': 0}
+        case_inputs[('ElastoDyn','PtfmPIner')] = {'vals': [7615854633.982569], 'group': 0}
+        case_inputs[('ElastoDyn','PtfmYIner')] = {'vals': [13746064822.41053], 'group': 0}
+
 
         # Hydrodyn Inputs, these need to be state-space (2), but they should work if 0
         # Need to be this for linearization

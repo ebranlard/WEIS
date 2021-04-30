@@ -4,8 +4,8 @@ General:
 WISDEM:
     RotorSE:
         flag: True
-        n_pitch_perf_surfaces: 5
-        n_tsr_perf_surfaces: 5
+        n_pitch_perf_surfaces: 10
+        n_tsr_perf_surfaces: 10
         spar_cap_ss: Spar_Cap_SS
         spar_cap_ps: Spar_Cap_PS
         n_span: 60
@@ -40,7 +40,7 @@ Level3: # Options for WEIS fidelity level 3 = nonlinear time domain
         CompElast: 1
         CompInflow: 1
         CompAero: 2
-        CompServo: 1
+        CompServo: 0
         CompHydro: 1
         CompSub: 0
         CompMooring: 1
@@ -101,13 +101,13 @@ Level2:
         TrimGain: 1e-4
         TrimTol: 1e-3
         wind_speeds: [5]
-        DOFs: ['TwFADOF1','TwFADOF2','TwSSDOF1','TwSSDOF2','PtfmHvDOF','PtfmSgDOF','PtfmPDOF']
+        DOFs: ['TwFADOF1','TwFADOF2','TwSSDOF1','TwSSDOF2','PtfmHvDOF','PtfmSgDOF','PtfmPDOF', 'FlapDOF1','FlapDOF2','EdgeDOF']
         NLinTimes: 36    
     
 openfast:
     file_management:
         FAST_namingOut:    lin         # Name of the OpenFAST output files
-        FAST_runDirectory: lin_twr/semi_lin             # Path to folder with the OpenFAST output files
+        FAST_runDirectory: lin_twr_2D/             # Path to folder with the OpenFAST output files
     dlc_settings:
         run_power_curve:   False
         run_IEC:           False
