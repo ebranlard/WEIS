@@ -1139,6 +1139,9 @@ class FASTLoadCases(ExplicitComponent):
             case_list, case_name_list = fastBatch.gen_linear_cases(inputs)
         else:
             fastBatch = runFAST_pywrapper_batch(FAST_ver=self.FAST_ver)
+
+
+
         fastBatch.channels = channels
 
         # JJ->DZ: we need to add the options and settings from `gen_linear_model` here
@@ -1157,6 +1160,9 @@ class FASTLoadCases(ExplicitComponent):
         fastBatch.case_name_list    = case_name_list
         fastBatch.channels          = channels
 
+
+
+
         # fastBatch.overwrite_outfiles = False  #<--- Debugging only, set to False to prevent OpenFAST from running if the .outb already exists
 
         # Run FAST
@@ -1167,6 +1173,32 @@ class FASTLoadCases(ExplicitComponent):
                 summary_stats, extreme_table, DELs, chan_time = fastBatch.run_serial()
             else:
                 summary_stats, extreme_table, DELs, chan_time = fastBatch.run_multi(self.cores)
+
+        # _MANU
+        FAST_directory = os.path.dirname(self.FAST_directory)
+        FAST_directory = os.path.dirname(FAST_directory) # Because of _cases
+        FAST_Out  = os.path.join(FAST_directory,self.FAST_runDirectory, 'lin_0.outb')
+        FAST_Twr  = os.path.join(FAST_directory,self.FAST_runDirectory, 'lin_0_ElastoDyn_tower.dat')
+        FAST_Map  = os.path.join(FAST_directory,self.FAST_runDirectory, 'lin_0_MAP.dat')
+        from shutil import copyfile
+        print('>>> FAST_Twr',FAST_Twr)
+        try:
+            copyfile(FAST_Map, FAST_Map+'_'+str(self.sim_idx))
+        except:
+            print('>>>>> Copy error Map')
+        try:
+            copyfile(FAST_Twr, FAST_Twr+'_'+str(self.sim_idx))
+        except:
+            print('>>>>> Copy error Twr')
+        try:
+            copyfile(FAST_Out, FAST_Out+'_'+str(self.sim_idx))
+        except:
+            print('>>>>> Copy error Out')
+
+
+
+
+
 
         self.fst_vt = fst_vt
         self.of_inumber = self.of_inumber + 1
