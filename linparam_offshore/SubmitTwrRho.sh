@@ -19,4 +19,4 @@ source activate
 conda activate weis-env
 
 echo "Run.."
-python 1_ParamTwr_E.py
+python 1_ParamTwr_rho.py
