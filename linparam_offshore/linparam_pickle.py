@@ -5,7 +5,7 @@ import copy
 
 import weis.control.mbc.mbc3 as mbc
 
-def openFASTstateSpace(eval_parameters, *args, **kwargs):
+def openFASTstateSpace(eval_parameters, *args, returnIDs=False):
     """
     Get linearized state space model from OpenFAST for a given set of parameters
 
@@ -69,40 +69,34 @@ def openFASTstateSpace(eval_parameters, *args, **kwargs):
         # --- Hack using MBC double checking
         import pyFAST
         from pyFAST.linearization.campbell import campbellData2TXT
-        try:
-            MBC=ABCD_list[idx]['MBC']
-            BladeLen=120.97
-            TowerLen=144.39
-            CD = mbc.campbell_diagram_data(MBC[0], BladeLen, TowerLen)
-            s=campbellData2TXT([CD], nFreqOut=50)
-            print(s)
-            print('>>> Freq MBC', np.around(CD['NaturalFreq_Hz'].flatten(),3))
-            print('>>> Damp MBC', np.around(CD['DampingRatio'].flatten(),3))
-        except:
-            print('>>> MBC not found')
+        import pyFAST.linearization.mbc.mbc3 as mbc
+        modeIDs=dict()
+# 
+#         try:
+        MBC=ABCD_list[idx]['MBC']
+        BladeLen=120.97
+        TowerLen=144.39
+        CD = mbc.campbell_diagram_data(MBC[0], BladeLen, TowerLen)
+
+        modeID_table,modesDesc=mbc.IdentifyModes([CD])
+        modeIDs= mbc.IdentifiedModesDict([CD], modeID_table, modesDesc)[0]
+        #for k,v in modeIDs.items():
+        #    print(k,v)
+
+        s=campbellData2TXT([CD], nFreqOut=80)
+        #print(s)
+        #print('>>> Freq MBC', np.around(CD['NaturalFreq_Hz'].flatten(),3))
+        #print('>>> Damp MBC', np.around(CD['DampingRatio'].flatten(),3))
+#         except:
+#             print('>>> MBC not found')
     else:
         raise NotImplementedError()
-        # Generate OpenFAST inputs
-        # TODO
-        # Call OpenFAST
-        # TODO
-        # Open "lin" files
-        # TODO
-        # Run MBC
-        # TODO
-        # Return time invariant state space:
-        A = np.zeros((4,4))
-        B = np.zeros((4,2))
-        C = np.zeros((3,5))
-        D = np.zeros((3,2))
-        A[:2,2:] = np.eye(2)
-        A[2,0]= -eval_parameters[list(eval_parameters.keys())[0]]
-        A[3,1]= -eval_parameters[list(eval_parameters.keys())[1]]
-        A[2,2]= -eval_parameters[list(eval_parameters.keys())[0]]
-        A[3,3]= -eval_parameters[list(eval_parameters.keys())[1]]
 
 
-    return A,B,C,D
+    if returnIDs:
+        return A,B,C,D,modeIDs
+    else:
+        return A,B,C,D
 
 
 def stateSpaceSlopes(ABCDp, ABCDm, deltaP):
@@ -160,7 +154,7 @@ def parametricStateSpace(parameter_ranges, *args, **kwargs):
 
 
 
-def evalParametericStateSpace(parameters, parameter_ranges, ABCD0, dABCD):
+def evalParametericStateSpace(parameters, parameter_ranges, ABCD0, dABCD, debug=False):
     """ 
     INPUTS:
       - parameters:
@@ -168,6 +162,8 @@ def evalParametericStateSpace(parameters, parameter_ranges, ABCD0, dABCD):
     A,B,C,D = copy.deepcopy(ABCD0)
     for name,p in parameters.items():
         deltaP = p - parameter_ranges[name]['ref'] 
+        if debug:
+            print('param',name,'val',p,'ref',parameter_ranges[name]['ref'],'deltaP',deltaP)
         A += dABCD[name][0] * deltaP
         B += dABCD[name][1] * deltaP
         C += dABCD[name][2] * deltaP

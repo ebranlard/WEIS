@@ -1,9 +1,8 @@
-lin_test
-lin_twr
-lin_moor
-tower_doe
-tower_rho_doe
-moor_doe
+lin_test*
+lin_twr*
+lin_moor*
+tower_*doe*
+moor_*doe*
 baseline
 baseline_new
 *.png

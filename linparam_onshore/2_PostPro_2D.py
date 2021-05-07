@@ -1,5 +1,6 @@
 import numpy as np
 import openmdao.api as om
+import pandas as pd
 import pickle
 import matplotlib.pyplot as plt
 
@@ -57,6 +58,7 @@ dvs_names =  driver_cases[0].get_design_vars(scaled=False).keys()
 dvs_dicts = [case.get_design_vars(scaled=False) for case in driver_cases]
 nCase=len(driver_cases)
 
+print('--- DATABASE INFO -----------------------------------------')
 print('Number of cases  :',nCases)
 print('Number of states :',nx)
 print('Number of dvs    :',len(dvs_names))
@@ -68,8 +70,9 @@ dvs=dict()
 for k in dvs_names:
     nVals = len(dvs_dicts[0][k])
     if nVals==1:
+        k2=k
         vals  = [d[k][0] for d in dvs_dicts]
-        dvs[k]=np.unique(np.around(vals))
+        dvs[k2]=np.unique(np.around(vals))
     else:
         for i in range(nVals):
             k2=k+'_'+str(i)
@@ -125,7 +128,34 @@ AA_d     = np.zeros((nx,nx,n1,n2))
 AA_l     = np.zeros((nx,nx,n1,n2))
 
 
+print('--- MAKING SURE SS MATCH AT REF POINTS  -----------------------------')
+i1mid=int(len(V1)/2)
+i2mid=int(len(V2)/2)
+parameters = { k1: V1[i1mid], k2: V2[i2mid] }
+SS_l = evalParametericStateSpace(parameters, parameter_ranges, SS0, dSS, debug=True)
+SS_d = openFASTstateSpace(parameters, driver_cases, ABCD_list, dvs)
+# EA =np.max(np.abs(SS_d[0]-SS0[0]))
+# EB =np.max(np.abs(SS_d[1]-SS0[1]))
+# EC =np.max(np.abs(SS_d[2]-SS0[2]))
+# ED =np.max(np.abs(SS_d[3]-SS0[3]))
+# print(EA, EB, EC, ED)
+# EA =np.max(np.abs(SS_l[0]-SS0[0]))
+# EB =np.max(np.abs(SS_l[1]-SS0[1]))
+# EC =np.max(np.abs(SS_l[2]-SS0[2]))
+# ED =np.max(np.abs(SS_l[3]-SS0[3]))
+# print(EA, EB, EC, ED)
+np.testing.assert_equal(SS_l,SS0)
+np.testing.assert_equal(SS_d,SS0)
+np.testing.assert_equal(SS_l,SS_d)
+
+# import pdb; pdb.set_trace()
+
+
 print('--- EVALUATING AT DESIRED POINTS ------------------------------------')
+IFA1=[]
+IFA2=[]
+ISS1=[]
+ISS2=[]
 for i1,v1 in enumerate(V1):
     for i2,v2 in enumerate(V2):
         # TODO
@@ -140,7 +170,14 @@ for i1,v1 in enumerate(V1):
         #print('State space evaluated using linearized param')
         #print(SS_l[0])
         # Method "3"
-        SS_d = openFASTstateSpace(parameters, driver_cases, ABCD_list, dvs)
+        SS_d = openFASTstateSpace(parameters, driver_cases, ABCD_list, dvs, returnIDs=True)
+        ids=SS_d[4]
+        IFA1.append(ids['1st Tower FA']['ID'])
+        IFA2.append(ids['2nd Tower FA']['ID'])
+        ISS1.append(ids['1st Tower SS']['ID'])
+        ISS2.append(ids['2nd Tower SS']['ID'])
+
+
         print('State space evaluated directly')
         #print(SS_d[0])
         #import pdb; pdb.set_trace()
@@ -151,6 +188,18 @@ for i1,v1 in enumerate(V1):
         fd_l, zeta_l, _, f0_l = eigA(SS_l[0]) #, nq=1, nq1=1, fullEV=False);
         print('>>> Freq',np.around(f0_d,3))
         print('>>> Damp',np.around(zeta_d,3))
+
+        if i1==i1mid and i2==i2mid:
+            EA =np.max(np.abs(SS_d[0]-SS0[0]))
+            EB =np.max(np.abs(SS_d[1]-SS0[1]))
+            EC =np.max(np.abs(SS_d[2]-SS0[2]))
+            ED =np.max(np.abs(SS_d[3]-SS0[3]))
+            print(EA, EB, EC, ED)
+            EA =np.max(np.abs(SS_l[0]-SS0[0]))
+            EB =np.max(np.abs(SS_l[1]-SS0[1]))
+            EC =np.max(np.abs(SS_l[2]-SS0[2]))
+            ED =np.max(np.abs(SS_l[3]-SS0[3]))
+            print(EA, EB, EC, ED)
         if bRemoveHighDamp:
             Idamp_d=zeta_d<0.8
             Idamp_l=zeta_l<0.8

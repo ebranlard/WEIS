@@ -1,5 +1,6 @@
 import numpy as np
 import openmdao.api as om
+import pandas as pd
 import pickle
 import matplotlib.pyplot as plt
 
@@ -26,18 +27,15 @@ TowerLen=144.39
 defaultRC();
 
 # --- Parameters
+outDir='_Outputs/'
 bRemoveHighDamp=False
-bFlipKeys=False
+bFlipKeys=True
 caseName   = 'tower'
-pickleFile = '{}_doe/ABCD_matrices.pkl'.format(caseName)
-caseFile   = '{}_doe/log_opt.sql'.format(caseName)
+caseName   = 'moor_doe'
+pickleFile = '{}/ABCD_matrices.pkl'.format(caseName)
+caseFile   = '{}/log_opt.sql'.format(caseName)
 
-nFreqMax=50
-
-# if bRemoveHighDamp:
-#     nFreqMax = 6
-# else:
-#     nFreqMax = 8
+nFreqMax=60
 
 if bFlipKeys:
     caseName+='Flip'
@@ -60,6 +58,7 @@ dvs_names =  driver_cases[0].get_design_vars(scaled=False).keys()
 dvs_dicts = [case.get_design_vars(scaled=False) for case in driver_cases]
 nCase=len(driver_cases)
 
+print('--- DATABASE INFO -----------------------------------------')
 print('Number of cases  :',nCases)
 print('Number of states :',nx)
 print('Number of dvs    :',len(dvs_names))
@@ -71,8 +70,9 @@ dvs=dict()
 for k in dvs_names:
     nVals = len(dvs_dicts[0][k])
     if nVals==1:
+        k2=k
         vals  = [d[k][0] for d in dvs_dicts]
-        dvs[k]=np.unique(np.around(vals))
+        dvs[k2]=np.unique(np.around(vals))
     else:
         for i in range(nVals):
             k2=k+'_'+str(i)
@@ -116,6 +116,7 @@ else:
     raise NotImplementedError()
     V1 = []
     V2 = []
+
 n2=len(V2)
 n1=len(V1)
 freq_d_d = np.zeros((nFreqMax, n1,n2))
@@ -128,7 +129,38 @@ AA_d     = np.zeros((nx,nx,n1,n2))
 AA_l     = np.zeros((nx,nx,n1,n2))
 
 
+print('--- MAKING SURE SS MATCH AT REF POINTS  -----------------------------')
+i1mid=int(len(V1)/2)
+i2mid=int(len(V2)/2)
+parameters = { k1: V1[i1mid], k2: V2[i2mid] }
+SS_l = evalParametericStateSpace(parameters, parameter_ranges, SS0, dSS, debug=True)
+SS_d = openFASTstateSpace(parameters, driver_cases, ABCD_list, dvs)
+# EA =np.max(np.abs(SS_d[0]-SS0[0]))
+# EB =np.max(np.abs(SS_d[1]-SS0[1]))
+# EC =np.max(np.abs(SS_d[2]-SS0[2]))
+# ED =np.max(np.abs(SS_d[3]-SS0[3]))
+# print(EA, EB, EC, ED)
+# EA =np.max(np.abs(SS_l[0]-SS0[0]))
+# EB =np.max(np.abs(SS_l[1]-SS0[1]))
+# EC =np.max(np.abs(SS_l[2]-SS0[2]))
+# ED =np.max(np.abs(SS_l[3]-SS0[3]))
+# print(EA, EB, EC, ED)
+np.testing.assert_equal(SS_l,SS0)
+np.testing.assert_equal(SS_d,SS0)
+np.testing.assert_equal(SS_l,SS_d)
+
+# import pdb; pdb.set_trace()
+
+
 print('--- EVALUATING AT DESIRED POINTS ------------------------------------')
+
+ISurge=[]
+IHeave=[]
+IPitch=[]
+IFA1=[]
+IFA2=[]
+ISS1=[]
+ISS2=[]
 for i1,v1 in enumerate(V1):
     for i2,v2 in enumerate(V2):
         # TODO
@@ -143,7 +175,18 @@ for i1,v1 in enumerate(V1):
         #print('State space evaluated using linearized param')
         #print(SS_l[0])
         # Method "3"
-        SS_d = openFASTstateSpace(parameters, driver_cases, ABCD_list, dvs)
+        SS_d = openFASTstateSpace(parameters, driver_cases, ABCD_list, dvs, returnIDs=True)
+
+        ids=SS_d[4]
+        ISurge.append(ids['Platform surge']['ID'])
+        IHeave.append(ids['Platform heave']['ID'])
+        IPitch.append(ids['Platform pitch']['ID'])
+        IFA1.append(ids['1st Tower FA']['ID'])
+        IFA2.append(ids['2nd Tower FA']['ID'])
+        ISS1.append(ids['1st Tower SS']['ID'])
+        ISS2.append(ids['2nd Tower SS']['ID'])
+
+
         print('State space evaluated directly')
         #print(SS_d[0])
         #import pdb; pdb.set_trace()
@@ -152,8 +195,19 @@ for i1,v1 in enumerate(V1):
         AA_l[:,:,i1,i2] = SS_l[0]
         fd_d, zeta_d, _, f0_d = eigA(SS_d[0], nq=16) #, nq=1, nq1=1, fullEV=False);
         fd_l, zeta_l, _, f0_l = eigA(SS_l[0], nq=16) #, nq=1, nq1=1, fullEV=False);
-        print('>>> Freq',np.around(f0_d,3))
-        print('>>> Damp',np.around(zeta_d,3))
+        #print('>>> Freq',np.around(f0_d,3))
+        #print('>>> Damp',np.around(zeta_d,3))
+        if i1==i1mid and i2==i2mid:
+            EA =np.max(np.abs(SS_d[0]-SS0[0]))
+            EB =np.max(np.abs(SS_d[1]-SS0[1]))
+            EC =np.max(np.abs(SS_d[2]-SS0[2]))
+            ED =np.max(np.abs(SS_d[3]-SS0[3]))
+            print(EA, EB, EC, ED)
+            EA =np.max(np.abs(SS_l[0]-SS0[0]))
+            EB =np.max(np.abs(SS_l[1]-SS0[1]))
+            EC =np.max(np.abs(SS_l[2]-SS0[2]))
+            ED =np.max(np.abs(SS_l[3]-SS0[3]))
+            print(EA, EB, EC, ED)
         if bRemoveHighDamp:
             Idamp_d=zeta_d<0.8
             Idamp_l=zeta_l<0.8
@@ -172,9 +226,29 @@ for i1,v1 in enumerate(V1):
         freq_0_d[:iFreqMax,i1,i2] = f0_d[:iFreqMax]
         freq_0_l[:iFreqMax,i1,i2] = f0_l[:iFreqMax]
 
+
+from scipy.stats import mode
+
+print('ISurge',mode(ISurge)[0][0],ISurge)
+print('IHeave',mode(IHeave)[0][0],IHeave)
+print('IPitch',mode(IPitch)[0][0],IPitch)
+print('IFA1'  ,mode(IFA1  )[0][0],IFA1  )
+print('ISS1'  ,mode(ISS1  )[0][0],ISS1  )
+print('IFA2'  ,mode(IFA2  )[0][0],IFA2  )
+print('ISS2'  ,mode(ISS2  )[0][0],ISS2  )
+
+for i2,v2 in enumerate(V2):
+	columns=[k1]+['f{:d}'.format(i) for i in range(nFreqMax)]
+	df = pd.DataFrame(data=np.column_stack((V1, freq_0_d[:,:,i2].T)), columns=columns)
+	df.to_csv(outDir+caseName+'_freqd_{}.csv'.format(v2),index=False, sep=',')
+
 print(V1)
 print(V2)
 print(freq_0_d.shape)
+print(freq_0_d[0,:,:])
+print(freq_0_l[0,:,:])
+
+
 
 
 if bRemoveHighDamp:
@@ -209,7 +283,7 @@ else:
     ]
 
 
-IFreq=[ 0, 1, 3, 46, 48, 49 ]
+#IFreq=[ 0, 1, 3, 46, 48, 49 ]
 
 SFreq=[
 'Surge',
@@ -220,6 +294,25 @@ SFreq=[
 '2nd tower ss',
 ]
 
+IFreq=np.array([
+mode(ISurge)[0][0]  ,#      1,
+mode(IHeave)[0][0]  ,#      3,
+mode(IPitch)[0][0]  ,#      4,
+mode(IFA1  )[0][0]  ,#      7,
+mode(ISS1  )[0][0]  ,#      47,
+mode(ISS2  )[0][0]-1,#      58,
+mode(ISS2  )[0][0]  ,#      59
+])-1
+
+SFreq=[
+'Surge',
+'Heave',
+'Pitch',
+'1st tower fa',
+'1st tower ss',
+'2nd tower ss',
+'2nd tower fa',
+]
 
 # IFreq=[iFA1,iSS1,iFA2,iFl2c,iFl2p]
 # SFreq=['1st Fore-Aft','1st Side Side','2nd Fore-Aft','2nd Flap coll.','2nd Flap prog.']
@@ -248,56 +341,58 @@ maxrelF= 3
 levsRel=np.linspace(minrelF,maxrelF,101)
 levsF  =np.linspace(minF,maxF     ,101)
 
-fig,axes = plt.subplots(1,len(IFreq), sharex=True, figsize=(9.4,3.4)) # (6.4,4.8)
-fig.subplots_adjust(left=0.12, right=0.85, top=0.93, bottom=0.12, hspace=0.20, wspace=0.40)
-
-cmap='seismic'
-ims=[]
-plotRel=True
-for ii, (iFreq,s) in enumerate(zip(IFreq,SFreq)):
-    ax=axes[ii]
-    F_d=freq_0_d[iFreq,:,:]
-    F_l=freq_0_l[iFreq,:,:]
-    rel=(F_l-F_d)/F_d*100
-    print(s,np.min(rel), np.max(rel), np.mean(rel))
-    if plotRel:
-        im=ax.contourf(V1,V2,rel.T, levels=levsRel, vmin=minrelF, vmax=maxrelF, cmap=cmap)
-        #im=ax.pcolormesh(V1,V2,rel.T, vmin=minrelF, vmax=maxrelF, cmap=cmap)
-    else:
-        im=ax.contourf(V1,V2,(F_l-F_d).T,levels=levsF, vmin=minF, vmax=maxF, cmap=cmap)
-        #im=ax.pcolormesh(V1,V2,(F_l-F_d).T, vmin=minF, vmax=maxF, cmap=cmap)
-    ims.append(im)
-    ax.set_xlabel(k1)
-    ax.set_ylabel(k2)
-    ax.set_title(s)
-    ax.tick_params(direction='in')
-
-cbar_ax = fig.add_axes([0.895, 0.13, 0.02, 0.772])
-cbar=fig.colorbar(ims[2], cax=cbar_ax)
-
-
-fig,axes = plt.subplots(1,len(IFreq), sharex=True, figsize=(9.4,3.4)) # (6.4,4.8)
-fig.subplots_adjust(left=0.12, right=0.85, top=0.93, bottom=0.12, hspace=0.20, wspace=0.40)
-for ii, (iFreq,s) in enumerate(zip(IFreq,SFreq)):
-    ax=axes[ii]
-    F_d=damp_d[iFreq,:,:]
-    F_l=damp_l[iFreq,:,:]
-    rel=(F_l-F_d)/F_d*100
-    print(s,np.min(rel), np.max(rel), np.mean(rel))
-    if plotRel:
-        im=ax.contourf(V1,V2,rel.T, levels=levsRel, vmin=minrelF, vmax=maxrelF, cmap=cmap)
-        #im=ax.pcolormesh(V1,V2,rel.T, vmin=minrelF, vmax=maxrelF, cmap=cmap)
-    else:
-        im=ax.contourf(V1,V2,(F_l-F_d).T,levels=levsF, vmin=minF, vmax=maxF, cmap=cmap)
-        #im=ax.pcolormesh(V1,V2,(F_l-F_d).T, vmin=minF, vmax=maxF, cmap=cmap)
-    ims.append(im)
-    ax.set_xlabel(k1)
-    ax.set_ylabel(k2)
-    ax.set_title(s)
-    ax.tick_params(direction='in')
-
-cbar_ax = fig.add_axes([0.895, 0.13, 0.02, 0.772])
-cbar=fig.colorbar(ims[2], cax=cbar_ax)
+# --- 2d Plots of errors
+# 
+# fig,axes = plt.subplots(1,len(IFreq), sharex=True, figsize=(9.4,3.4)) # (6.4,4.8)
+# fig.subplots_adjust(left=0.12, right=0.85, top=0.93, bottom=0.12, hspace=0.20, wspace=0.40)
+# 
+# cmap='seismic'
+# ims=[]
+# plotRel=True
+# for ii, (iFreq,s) in enumerate(zip(IFreq,SFreq)):
+#     ax=axes[ii]
+#     F_d=freq_0_d[iFreq,:,:]
+#     F_l=freq_0_l[iFreq,:,:]
+#     rel=(F_l-F_d)/F_d*100
+#     print(s,np.min(rel), np.max(rel), np.mean(rel))
+#     if plotRel:
+#         im=ax.contourf(V1,V2,rel.T, levels=levsRel, vmin=minrelF, vmax=maxrelF, cmap=cmap)
+#         #im=ax.pcolormesh(V1,V2,rel.T, vmin=minrelF, vmax=maxrelF, cmap=cmap)
+#     else:
+#         im=ax.contourf(V1,V2,(F_l-F_d).T,levels=levsF, vmin=minF, vmax=maxF, cmap=cmap)
+#         #im=ax.pcolormesh(V1,V2,(F_l-F_d).T, vmin=minF, vmax=maxF, cmap=cmap)
+#     ims.append(im)
+#     ax.set_xlabel(k1)
+#     ax.set_ylabel(k2)
+#     ax.set_title(s)
+#     ax.tick_params(direction='in')
+# 
+# cbar_ax = fig.add_axes([0.895, 0.13, 0.02, 0.772])
+# cbar=fig.colorbar(ims[2], cax=cbar_ax)
+# 
+# 
+# fig,axes = plt.subplots(1,len(IFreq), sharex=True, figsize=(9.4,3.4)) # (6.4,4.8)
+# fig.subplots_adjust(left=0.12, right=0.85, top=0.93, bottom=0.12, hspace=0.20, wspace=0.40)
+# for ii, (iFreq,s) in enumerate(zip(IFreq,SFreq)):
+#     ax=axes[ii]
+#     F_d=damp_d[iFreq,:,:]
+#     F_l=damp_l[iFreq,:,:]
+#     rel=(F_l-F_d)/F_d*100
+#     print(s,np.min(rel), np.max(rel), np.mean(rel))
+#     if plotRel:
+#         im=ax.contourf(V1,V2,rel.T, levels=levsRel, vmin=minrelF, vmax=maxrelF, cmap=cmap)
+#         #im=ax.pcolormesh(V1,V2,rel.T, vmin=minrelF, vmax=maxrelF, cmap=cmap)
+#     else:
+#         im=ax.contourf(V1,V2,(F_l-F_d).T,levels=levsF, vmin=minF, vmax=maxF, cmap=cmap)
+#         #im=ax.pcolormesh(V1,V2,(F_l-F_d).T, vmin=minF, vmax=maxF, cmap=cmap)
+#     ims.append(im)
+#     ax.set_xlabel(k1)
+#     ax.set_ylabel(k2)
+#     ax.set_title(s)
+#     ax.tick_params(direction='in')
+# 
+# cbar_ax = fig.add_axes([0.895, 0.13, 0.02, 0.772])
+# cbar=fig.colorbar(ims[2], cax=cbar_ax)
 
 
 # Z = np.ma.masked_where(np.isnan(Speed), Speed)
@@ -315,7 +410,8 @@ fig,axes = plt.subplots(1, 2, sharex=True, figsize=(9.4,8.4)) # (6.4,4.8)
 fig.subplots_adjust(left=0.12, right=0.95, top=0.95, bottom=0.11, hspace=0.20, wspace=0.20)
 Colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
-for ii in np.arange(nFreqMax):
+for ii in np.arange(1):
+    print('ii',ii)
     ax = axes[0]
 
     #c, ls, ms, mk = campbellModeStyles(ii, FreqID[ii])
@@ -338,8 +434,7 @@ axes[1].set_ylabel('Damping radio [-]')
 axes[0].set_xlabel(k1)
 axes[1].set_xlabel(k1)
 axes[0].legend()
-fig.savefig(caseName+'_freq.png')
-# # # # 
+fig.savefig(outDir+caseName+'_freq.png')
 # # # 
 
 
@@ -364,7 +459,7 @@ fig.savefig(caseName+'_freq.png')
 # axes[-1,0].set_xlabel(k1)
 # axes[-1,1].set_xlabel(k1)
 # axes[0,0].legend()
-# fig.savefig(caseName+'_freqIndiv.png')
+# fig.savefig(outDir+caseName+'_freqIndiv.png')
 
 
 
@@ -408,22 +503,3 @@ plt.show()
 #     ax.set_ylabel('Frequency #{} [Hz]'.format(ii+1))
 # ax.set_xlabel('Tower Top diameter [m]')
 # ax.legend()
-# 
-# 
-# 
-# 
-# 
-# 
-# # # 
-# # # 
-# # # # 
-# # # # A_plot = np.array(A_plot)
-# # # # tower_dia = np.array(tower_dia)
-# # # # 
-# # # # plt.scatter(tower_dia[::5, 1], A_plot[::5])
-# # # # 
-# # # # plt.xlabel('Tower base diameter, m')
-# # # # plt.ylabel('A[1, 1]')
-# # # # plt.tight_layout()
-# # # # 
-# # # # plt.show()
