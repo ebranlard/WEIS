@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=MorL
-#SBATCH --time=47:00:00
+#SBATCH --time=8:00:00
 #SBATCH --nodes=1                               # Number of nodes
 #SBATCH --ntasks-per-node=36                    # Number of processors per node
 #SBATCH -A bar                           # Allocation

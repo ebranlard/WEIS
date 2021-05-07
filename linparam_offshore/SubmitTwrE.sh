@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=Twr                  # Job name
+#SBATCH --job-name=TwrE                 # Job name
 #SBATCH --time=9:00:00
 #SBATCH --nodes=1                               # Number of nodes
 #SBATCH --ntasks-per-node=36                    # Number of processors per node
